@@ -1,0 +1,106 @@
+
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --background: #0b0b0c;
+  --foreground: #f4f4f5;
+  --orange: #fb923c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 85% 0%, rgba(249, 115, 22, 0.09), transparent 36%),
+    var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 22px;
+  background: rgba(20, 20, 21, 0.88);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.18);
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: #d4d4d8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #303033;
+  border-radius: 10px;
+  background: #101011;
+  padding: 12px 13px;
+  color: #fafafa;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.field:focus {
+  border-color: var(--orange);
+}
+
+.field::placeholder {
+  color: #71717a;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+::selection {
+  background: #fb923c;
+  color: #111;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
