@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Travel Regret Engine
 
-## Getting Started
+Spot problems in your trip plan before you leave — with **AI Ammavan**, a witty Malayalam-first Kerala travel uncle powered by [Sarvam AI](https://www.sarvam.ai).
 
-First, run the development server:
+- **Next.js (App Router) + React + TypeScript + Tailwind CSS v4**
+- Deterministic, explainable **regret-risk engine** (server-side). The LLM never sets the score.
+- AI Ammavan appears as verdicts/comments inside the dashboard (not a chatbot).
+- Works without AI: if Sarvam is missing or down you still get the score and a localized fallback verdict.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+> The score is a heuristic indicator, **not** a scientifically validated probability of regret.
+
+## 1. Install Node.js (Windows PowerShell)
+
+Install the current LTS from <https://nodejs.org> (Next.js needs a recent Node 20+). Then open a **new** PowerShell window:
+
+```powershell
+node -v
+npm -v
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 2. Get the project and install dependencies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+cd path\to\travel-regret-engine
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+(Creating from scratch instead? `npx create-next-app@latest`, then copy these files in and `npm install lucide-react`.)
 
-## Learn More
+## 3. Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local` in the project root (next to `package.json`):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```powershell
+Copy-Item .env.example .env.local
+notepad .env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+SARVAM_API_KEY=your_actual_api_key
+SARVAM_MODEL=sarvam-105b-conversations
+GEOAPIFY_API_KEY=   # optional
+```
 
-## Deploy on Vercel
+- **`SARVAM_API_KEY`** – your own key from the Sarvam dashboard (<https://dashboard.sarvam.ai>). Never paste it into chats, commit it, or prefix it with `NEXT_PUBLIC_`.
+- **`SARVAM_MODEL`** – optional; if missing the app uses `sarvam-105b-conversations`. Per Sarvam's current docs the `/v1/chat/completions` endpoint serves `sarvam-105b` and `sarvam-105b-conversations`.
+- **`GEOAPIFY_API_KEY`** (optional) – live local places (OpenStreetMap data). Without it, local suggestions are clearly labelled illustrative ideas.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Verify your Sarvam setup (prints no secrets):**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```powershell
+npm run check:sarvam
+```
+
+It tells you whether the key/model are set and what Sarvam answers. Note: **Sarvam returns HTTP 403 (not 401) for an invalid key**, 429 for rate limits/credits, and 400/422 for a bad request or model name.
+
+Restart `npm run dev` after editing `.env.local`. You can also open <http://localhost:3000/api/ammavan> — it shows `{"configured":true,"model":"..."}` (never the key).
+
+## Ammavan voice playback
+
+On the Results page, click **Ammavan speaks** to generate and play the current verdict using Sarvam Bulbul v3 text-to-speech. It uses the existing `SARVAM_API_KEY`; no separate TTS key is needed if your Sarvam account has TTS access. The voice endpoint is server-side at `/api/ammavan/speak`, and the browser never receives the API key. Voice playback supports Malayalam, English (Indian), Tamil, and Hindi.
+
+If voice generation fails, the written verdict remains available. Check your Sarvam account's TTS access and usage limits, then retry.
+
+## 4. Run
+
+```powershell
+npm run dev
+```
+
+Open <http://localhost:3000>.
+
+Other commands: `npm run typecheck`, `npm run lint`, `npm run build`, `npm start`.
+
+## 5. How to test AI Ammavan manually
+
+1. `npm run dev`, open the app, click **Get Started**.
+2. Enter `Munnar, Alleppey`, pick dates, **Estimated cost 30000**, then **Next**.
+3. On step 2 set Activities `20`, Transfers `6`, Travel hours `5`, **Sleep `0`**, language **Malayalam**, roast **Spicy** → **Analyze My Trip**.
+4. On the results page you should see: a high score, fatigue at 100 with a zero-sleep explanation, and Ammavan (alarmed face) with a headline and verdict. The badge must say **Generated by Sarvam AI**. If it says **Offline verdict**, read the yellow message — it names the cause (missing key, 403 invalid key, rate limit, ...) and has a **Retry Ammavan** button.
+5. Click **Edit Trip**, switch language to English / Tamil / Hindi and analyze again: the verdict language changes.
+6. Click **Rescue Mode** / **Alternative Suggestions**, pick a plan, then **Apply These Changes to My Plan**: the results page re-analyses the saved plan and shows the newly calculated score.
+7. Turn off the network or blank `SARVAM_API_KEY` and analyze: the score still works, with an offline verdict.
+
+Other checks: validation messages (empty destination, end date before start date, sleep `-1` or `13`), examples page filters + "Try This Trip", insights sidebar, local discovery, solo companion (Solo traveller).
+
+## What the app does and doesn't ask
+
+- **Days** are derived from your start/end dates.
+- **Budget** is not asked. The estimated cost is compared with a **reference budget** (default ₹5,000 per person per day × days; examples carry their own). This is stated in the UI and in Ammavan's prompt.
+- **Sleep 0 is allowed** and scored as a severe fatigue risk (fatigue 100; ≤3h is floored at 90).
+
+## 6. Common problems
+
+| Problem | Fix |
+|---|---|
+| `npm` / `node` not recognised | Reopen PowerShell after installing Node. |
+| "Offline verdict" badge even with a key | Run `npm run check:sarvam`. The yellow message on the results page names the cause. Server console shows `[ammavan] verdict failed: <code>` (e.g. `invalid_key (HTTP 403)`, `rate_limited`). |
+| Env changes ignored | Restart the dev server. File must be `.env.local` in the project root. |
+| Port 3000 busy | `npm run dev -- -p 3001` |
+| Images show a gradient | Remote photos (Unsplash) couldn't load; the fallback is intentional. Put your own files in `public/images/` and edit `lib/images.ts`. |
+| Malayalam looks like boxes | Install a Malayalam-capable system font (e.g. Noto Sans Malayalam). |
+
+## 7. Deployment (Vercel)
+
+1. Push to GitHub (`.env.local` is git-ignored).
+2. Import the repo on <https://vercel.com>.
+3. Add `SARVAM_API_KEY`, `SARVAM_MODEL` (and optionally `GEOAPIFY_API_KEY`) in *Project → Settings → Environment Variables*.
+4. Deploy. Consider adding rate limiting (e.g. Vercel Firewall or Upstash) before sharing publicly, since `/api/ammavan` spends your Sarvam credits.
+
+## 8. Security guidance
+
+- Never commit `.env.local`; never prefix secrets with `NEXT_PUBLIC_`.
+- All secret calls happen in route handlers; the browser only talks to `/api/*`.
+- If a key leaks, revoke it in the provider dashboard and issue a new one.
+- Server inputs are validated (`lib/validation.ts`); request bodies are capped; logs never include keys or trip data.
+
+## Project map
+
+```
+app/            pages + API routes (analyze, ammavan, alternatives, places)
+components/     UI building blocks (gauge, breakdown, verdict, form, ...)
+lib/scoring.ts  the documented risk formula and weights
+lib/alternatives.ts  strategy plans, re-scored by the same engine
+lib/ammavan.ts / sarvam.ts / fallback.ts   AI integration + offline fallback
+```
+
+## Scoring at a glance
+
+`Score = 0.35×Budget + 0.30×Schedule + 0.22×Fatigue + 0.13×Transport` (each factor 0–100). Weights live in `lib/scoring.ts` and are initial heuristics: overspending and over-scheduling are the most common regret sources. Levels: Low < 35, Moderate 35–65, High > 65.
+
+## Scope notes
+
+- Human companion matching is **not** implemented (no fake profiles); the solo feature is an AI persona with search links and safety basics.
+- No live weather, opening hours, prices or availability are claimed anywhere.
