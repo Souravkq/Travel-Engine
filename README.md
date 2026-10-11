@@ -21,7 +21,7 @@ npm -v
 ## 2. Get the project and install dependencies
 
 ```powershell
-cd path\to\travel-regret-engine
+cd path\to\travel-engine
 npm install
 ```
 
@@ -39,7 +39,7 @@ notepad .env.local
 ```
 SARVAM_API_KEY=your_actual_api_key
 SARVAM_MODEL=sarvam-105b-conversations
-GEOAPIFY_API_KEY=   # optional
+GEOAPIFY_API_KEY=   
 ```
 
 - **`SARVAM_API_KEY`** – your own key from the Sarvam dashboard (<https://dashboard.sarvam.ai>). Never paste it into chats, commit it, or prefix it with `NEXT_PUBLIC_`.
@@ -105,7 +105,7 @@ Other checks: validation messages (empty destination, end date before start date
 
 1. Push to GitHub (`.env.local` is git-ignored).
 2. Import the repo on <https://vercel.com>.
-3. Add `SARVAM_API_KEY`, `SARVAM_MODEL` (and optionally `GEOAPIFY_API_KEY`) in *Project → Settings → Environment Variables*.
+3. Add `SARVAM_API_KEY`, `SARVAM_MODEL` and  `GEOAPIFY_API_KEY` in *Project → Settings → Environment Variables*.
 4. Deploy. Consider adding rate limiting (e.g. Vercel Firewall or Upstash) before sharing publicly, since `/api/ammavan` spends your Sarvam credits.
 
 ## 8. Security guidance
